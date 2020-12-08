@@ -1,0 +1,43 @@
+﻿@page "/Bonus"
+@inject IJSRuntime JS
+<h3>Bonus</h3>
+
+<div class="budget">
+    @foreach (var item in budgetItems)
+    {
+        <span>@item.Name</span>
+        <span>@item.Amount.ToString("c0")</span>
+        @*<input type="range" max="@totalBudget" step="1000" @bind="@item.Amount" @bind:event="oninput"  />*@
+        <input type="range" max="@(item.Amount + Remaning)" step="1000" @bind="@item.Amount" @bind:event="oninput"
+               style="width: @(100 * (item.Amount + Remaning) / totalBudget)%"/>
+    }
+
+    <span>아빠 : </span>
+    <span>@Remaning.ToString("c0")</span>
+</div>
+
+<button class="btn btn-primary" disabled="@(Remaning > 0)" @onclick="btnSave_Click">완료</button>
+
+
+@code 
+{
+    // 총 예산
+    decimal totalBudget = 1_000_000;
+
+    // 남은 양
+    public decimal Remaning => totalBudget - budgetItems.Sum(b => b.Amount);
+
+    // 예산 항목
+    List<BudgetItem> budgetItems = new List<BudgetItem>
+    {
+        new BudgetItem {Name="아내" },
+        new BudgetItem {Name="아들" },
+        new BudgetItem {Name="공주" },
+
+    };
+
+    void btnSave_Click()
+    {
+        JS.InvokeAsync<object>("alert", "용돈 나누기 완료");
+    }
+}
