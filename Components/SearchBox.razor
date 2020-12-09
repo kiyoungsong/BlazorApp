@@ -1,0 +1,62 @@
+﻿@using System.Timers;
+@implements IDisposable
+
+<div class="search">
+    <i class="oi oi-eye"></i>
+    <input placeholder="search..." @attributes="AdditionalAttributes" @bind="@SearchQuery" @bind:event="oninput" />
+    <input type="button" value="Search" @onclick="Search" />
+</div>
+<hr />
+자식 : @SearchQuery
+
+@code{
+
+    //양방향 바인딩을 해주고 싶다
+    private string searchQuery;
+    public string SearchQuery
+    {
+        get => searchQuery;
+        set
+        {
+            searchQuery = value;
+            debounceTimer.Stop();
+            debounceTimer.Start();
+        }
+    }
+
+    //부모한테 태그속성 값을 받을때 사용
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    //자식 컴포넌트에서 발생한 정보를 부모 컴포넌트에게 전달
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
+
+    //몇초 지난 후 검색하는것
+    private Timer debounceTimer;
+    [Parameter]
+    public int Debounce { get; set; } = 3000;
+
+    protected override void OnInitialized()
+    {
+        debounceTimer = new Timer();
+        debounceTimer.Interval = Debounce;
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += SearchHandler;
+    }
+
+    void Search()
+    {
+        SearchQueryChanged.InvokeAsync(SearchQuery); // 부모의 메서드에 검색어 전달
+    }
+
+    async void SearchHandler(object source, ElapsedEventArgs e)
+    {
+        await InvokeAsync(()=> SearchQueryChanged.InvokeAsync(SearchQuery));
+    }
+
+    public void Dispose()
+    {
+        debounceTimer.Dispose();
+    }
+}
